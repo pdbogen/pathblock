@@ -1,1 +1,56 @@
-Hello, world.
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PathBlock Pathfinder Statblock Generator</title>
+  <script src='https://code.jquery.com/jquery-2.1.4.min.js'></script>
+  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js'></script>
+  <script src='pathblock.data.js'></script>
+  <script src='pathblock.view.js'></script>
+  <script src='pathblock.js'></script>
+  <link rel='StyleSheet' href='pathblock.css'>
+  <link rel='StyleSheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css'>
+</head>
+<body>
+<nav class='navbar navbar-default'>
+  <div class='container-fluid'>
+    <div class='navbar-header'>
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">PathBlock</a>
+    </div>
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href='#' id='menuNew'>New</a></li>
+        <li><a href='#' id='menuSave'>Save</a></li>
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            Load
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu" id='menuLoad'>
+          </ul>
+        </li>
+        <li><a href='#' id='menuNewSQ'>New SQ</a></li>
+        <li><a href='#' id='menuNewFeat'>New Feat</a></li>
+      </ul>
+    </div><!-- /.navbar-collapse -->
+  </div>
+</nav>
+<div class='container'>
+  <div class='row' style='max-height: 10%;'>
+    <div class='col-sm-6'>
+      <div class='panel'>
+        <div class='panel-body form-horizontal' id='statblockForm' style='max-height: 85vh; overflow-y: scroll;'>
+        </div>
+      </div>
+    </div>
+    <div class='col-sm-6' id='statblockTarget'></div>
+  </div>
+</div>
+</body>
+</html>
