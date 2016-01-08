@@ -1,3 +1,20 @@
+@media print {
+  div.navbar-header {
+    display: none;
+  }
+
+  div#statblockForm {
+    display: none;
+  }
+
+  div#statblockTarget {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+}
+
 .sbMajorSep, .sbSeparator {
   text-transform: uppercase;
 }
