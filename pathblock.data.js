@@ -39,13 +39,17 @@ var fields = [
       { name: "Senses", label: "Senses", type: "multi", options: [
           "all-around vision", "blindsense 20ft.", "blindsense 40ft.",
           "blindsight 30ft.", "blindsight 90ft.", "darkvision 60ft.",
-          "detect chaos", "detect evil", "detect good", "detect law",
+          "detect chaos", "detect evil", "detect good", "detect law", "detect magic",
           "detect snares and pits", "low-light vision", "scent",
           "see in darkness", "see invisibility", "tremorsense 60ft.",
           "true seeing"
         ]
       },
       { name: "Perception", type: "string", style: "skill" }
+    ]
+  },
+  { name: "Aura", type: "multi", label: "Aura", options: [
+      { name: "electricity (5 ft., DC 12)", label: "Electricity Aura", type: "Su", description: "an emerald automaton reduced to half its hit points or fewer emits hazardous energy from its damaged magical battery. Any non-construct creature that ends its turn within 5 feet of a damaged emerald automaton takes 1d10 points of electricity damage (Reflex DC 12 negates). The save DC is Constitution-based." }
     ]
   },
   { name: "Defense", style: "separator" },
@@ -112,14 +116,23 @@ var fields = [
   },
   { type: "row", delimiter: ";", fields: [
       { name: "dr", label: "DR", display: "Damage Reduction", type: "string", placeholder: "5/cold iron" },
-      { name: "immune", label: "Immune", display: "Immunities", type: "multi", options: [ "construct traits" ] },
+      { name: "immune", label: "Immune", display: "Immunities", type: "multi", options: [ 
+          { name: "construct traits", label: "Construct Traits", type: "Ex", description: "Constructs are immune to death effects, disease, mind-affecting effects (charms, compulsions, phantasms, patterns, and morale effects), necromancy effects, paralysis, poison, sleep, stun, and any effect that requires a Fortitude save (unless the effect also works on objects, or is harmless). Constructs are not subject to nonlethal damage, ability damage, ability drain, fatigue, exhaustion, or energy drain. Constructs are not at risk of death from massive damage. Immediately destroyed when reduced to 0 hit points or less. Immunity to bleed, disease, death effects, necromancy effects, paralysis, poison, sleep effects, and stunning." },
+          { name: "fire", label: "Fire", type: "Ex or Su", description: "A creature with immunities takes no damage from listed sources. Immunities can also apply to afflictions, conditions, spells (based on school, level, or save type), and other effects. A creature that is immune does not suffer from these effects, or any secondary effects that are triggered due to an immune effect." },
+          { name: "poison", label: "Poison", type: "Ex or Su", description: "A creature with immunities takes no damage from listed sources. Immunities can also apply to afflictions, conditions, spells (based on school, level, or save type), and other effects. A creature that is immune does not suffer from these effects, or any secondary effects that are triggered due to an immune effect." }
+        ]
+      },
+      { name: "resist", label: "Resist", type: "string", placeholder: "acid 10, cold 10" },
+      { name: "spellResistance", display: "Spell Resistance", label: "SR", type: "string", placeholder: "20" },
       { name: "Weaknesses", label: "Weaknesses", type: "multi", options: [ "magic dependent" ] }
     ]
   },
   { name: "Offense", style: "separator" },
   { name: "movement", type: "row", display: "Movement Speeds", style: "optList", fields: [
       { name: "speed",    display: "Base Speed", type: "string", placeholder: "30 ft.", label: "Speed" },
-      { name: "flyspeed", display: "Fly Speed",  type: "string", placeholder: "80ft. (average)", label: "fly" }
+      { name: "climbspeed", display: "Climb Speed",  type: "string", placeholder: "30ft.", label: "climb" },
+      { name: "flyspeed", display: "Fly Speed",  type: "string", placeholder: "80ft. (average)", label: "fly" },
+      { name: "swimspeed", display: "Swim Speed",  type: "string", placeholder: "30ft.", label: "swim" }
     ],
     formatter: function(row,field,rowvalue) {
       
@@ -148,8 +161,12 @@ var fields = [
     ]
   },
   { name: "Feats", type: "multi", label: "Feats", options: "sb_feats" },
+  { name: "Skills", type: "string", label: "Skills", display: "Skills" },
   { name: "SQ", type: "multi", label: "SQ", display: "Special Qualities", options: "sb_superquals" },
   { name: "Special Abilities", style: "separator" },
-  { name: "superquals", skip: true, type: "descs", target: "SQ" },
-  { name: "feats",      skip: true, type: "descs", target: "Feats" }
+  { name: "Poison", type: "string", label: "Poison", display: "Poison" },
+  { name: "auras", skip: true, type: "descs", source: "fields", target: "Aura" },
+  { name: "immunities", skip: true, type: "descs", source: "fields", target: "immune" },
+  { name: "feats",      skip: true, type: "descs", target: "Feats" },
+  { name: "superquals", skip: true, type: "descs", target: "SQ" }
 ];
