@@ -1,3 +1,5 @@
+// TODO: Sort SQ and Feat selects
+
 var loadedFile='working';
 
 function generateString(v) {
@@ -27,20 +29,17 @@ function generateMulti(v) {
     .addClass('multi')
     .data('multi', 'multi' + v.name)
     .attr("id", "sel" + v.name);
+  var addButton = $("<button class='btn btn-default btn-primary' type='button'>Add</button>")
+    .data("field", JSON.stringify(v))
+    .data("multi", "multi" + v.name)
+    .data("target", "sel" + v.name)
+    .attr("id", "mb" + v.name)
+    .click(multiButton);
   var div = $("<div class='input-group'>")
     .append(sel)
-    .append(
-      $("<span class='input-group-btn'>")
-        .append(
-          $("<button class='btn btn-default btn-primary' type='button'>Add</button>")
-            .data("field", JSON.stringify(v))
-            .data("multi", "multi" + v.name)
-            .data("target", "sel" + v.name)
-            .attr("id", "mb" + v.name)
-            .click(multiButton)
-        )
-    );
+    .append($("<span class='input-group-btn'>").append(addButton));
   var opts;
+
   if(Array.isArray(v.options)) {
     opts = v.options;
   } else {
@@ -54,7 +53,11 @@ function generateMulti(v) {
   }
 
   $.each(opts,function(i,opt){
-    sel.append( $("<option>").text(opt).val(opt) );
+    if(opt.name) {
+      sel.append( $("<option>").text(opt.name).val(opt.name) );
+    } else {
+      sel.append( $("<option>").text(opt).val(opt) );
+    }
   });
 
   var outer = $("<div>").append(div);
@@ -109,11 +112,16 @@ function generateRow(fields, elem) {
 }
 
 function generateForm() {
+  $("#statblockForm").empty();
   $.each(fields,function(i,v){
-    if(v.type == "row") {
-      $("#statblockForm").append(generateRow(v.fields,v));
-    } else {
-      $("#statblockForm").append(generateRow(Array(v),{}));
+    try {
+      if(v.type == "row") {
+        $("#statblockForm").append(generateRow(v.fields,v));
+      } else {
+        $("#statblockForm").append(generateRow(Array(v),{}));
+      }
+    } catch(e) {
+      alert( "Exception: " + a + " occurred generating form field " + v.name );
     }
   });
 }
@@ -260,6 +268,8 @@ function newSQ() {
     }
     localStorage.setItem("sb_superquals", JSON.stringify(superquals));
     generateForm();
+    loadState();
+    updateStatblock();
   }
 }
 
@@ -279,6 +289,8 @@ function newFeat() {
     }
     localStorage.setItem("sb_feats", JSON.stringify(feats));
     generateForm();
+    loadState();
+    updateStatblock();
   }
 }
 
@@ -302,7 +314,11 @@ function updateMenu() {
 
 $(function(){
   initializeMenu();
-  generateForm();
+  try {
+    generateForm();
+  } catch(TypeError) {
+    alert( "TypeError occurred while generating form" );
+  }
   loadState();
   updateStatblock();
   updateMenu();
