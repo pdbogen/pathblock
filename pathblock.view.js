@@ -18,6 +18,25 @@ function updateStatblockValue(v) {
   }
 }
 
+function findSource(fields,name) {
+  if(fields[0]) {
+    if(fields[0].type == "row") {
+      var rowResult = findSource(fields[0].fields, name);
+      if(rowResult) {
+        return rowResult;
+      } else {
+        return findSource(fields.slice(1),name);
+      }
+    } else if(fields[0].name == name) {
+      return fields[0];
+    } else {
+      return findSource(fields.slice(1),name);
+    }
+  } else {
+    return null;
+  }
+}
+
 function updateStatblockField(v) {
   var value = updateStatblockValue(v);
   var result;
@@ -37,24 +56,50 @@ function updateStatblockField(v) {
     result = $("<div class='sbSeparator'>").text(v.name);
   } else if(v.type == "descs") {
     var div = $("<div>");
-    var store = localStorage.getItem("sb_" + v.name);
-    if(store) {
-      store = JSON.parse(store);
-      var items = $("#multi" + v.target + " button").toArray().map(function(c,i,a){return $(c).data('val');});
+    var items = $("#multi" + v.target + " button").toArray().map(function(c,i,a){return $(c).data('val');});
+    if(v.source == "fields") {
+      store = findSource(fields, v.target);
+      if(store) {
+        store = store.options;
+      } else {
+        store = [];
+      }
       $.each(items,function(i, item){
-        var label = $("<span class='sbLabel'>");
-        label.text(item);
-        if(store[item].type) {
-          label.append(document.createTextNode(" (" + store[item].type + ")"));
+        var storeItem = store.filter(function(c,i,a){return c.name == item;})[0];
+        if(storeItem) {
+          var label = $("<span class='sbLabel'>");
+          label.text(storeItem.label || storeItem.name );
+          if(storeItem.type) {
+            label.append( " (" + storeItem.type + ")" );
+          }
+          label.append(": ");
+          div.append(
+            $("<div>")
+              .append(label)
+              .append(storeItem.description)
+          );
         }
-        label.append(": ");
-        div.append(
-          $("<div>")
-            .append(label)
-            .append(store[item].description)
-        );
       });
       result = div;
+    } else {
+      var store = localStorage.getItem("sb_" + v.name);
+      if(store) {
+        store = JSON.parse(store);
+        $.each(items,function(i, item){
+          var label = $("<span class='sbLabel'>");
+          label.text(item);
+          if(store[item].type) {
+            label.append(document.createTextNode(" (" + store[item].type + ")"));
+          }
+          label.append(": ");
+          div.append(
+            $("<div>")
+              .append(label)
+              .append(store[item].description)
+          );
+        });
+        result = div;
+      }
     }
   } else {
     result = $("<span class='sbValue'>");
