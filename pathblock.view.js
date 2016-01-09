@@ -84,24 +84,25 @@ function updateStatblockField(v) {
       });
       result = div;
     } else {
-      var store = localStorage.getItem("sb_" + v.name);
-      if(store) {
-        store = JSON.parse(store);
-        $.each(items,function(i, item){
-          var label = $("<span class='sbLabel'>");
-          label.text(item);
-          if(store[item].type) {
-            label.append(document.createTextNode(" (" + store[item].type + ")"));
-          }
-          label.append(": ");
-          div.append(
-            $("<div>")
-              .append(label)
-              .append(store[item].description)
-          );
-        });
-        result = div;
-      }
+      getData("sb_" + v.name, function(store) {
+        if(store) {
+          store = JSON.parse(store);
+          $.each(items,function(i, item){
+            var label = $("<span class='sbLabel'>");
+            label.text(item);
+            if(store[item].type) {
+              label.append(document.createTextNode(" (" + store[item].type + ")"));
+            }
+            label.append(": ");
+            div.append(
+              $("<div>")
+                .append(label)
+                .append(store[item].description)
+            );
+          });
+          result = div;
+        }
+      });
     }
   } else {
     result = $("<span class='sbValue'>");

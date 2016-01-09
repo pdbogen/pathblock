@@ -42,3 +42,7 @@
 .formSection {
   border-left: 1px solid black;
 }
+
+div#tokenholder {
+  color: #C0C0C0;
+}

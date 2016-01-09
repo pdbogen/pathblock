@@ -2,11 +2,28 @@
 
 var loadedFile='working';
 
-function getData(n) {
+function checkToken() {
+  var token = localStorage.getItem("pathblock_auth_token");
+  if(!token || token == "") {
+    token = prompt("Please provide an authentication token.");
+  } else {
+    $("#tokenholder").text(token);
+  }
+  localStorage.setItem("pathblock_auth_token", token);
+}
+
+function getData(n,cb) {
+  if(cb === undefined) { console.error( "synchronously retrieving " + n ); }
   var result = $.ajax({
     url: "/api/v1/datum/" + encodeURIComponent(n),
-    async: false
+    async: cb!==undefined,
+    headers: {
+      Authorization: localStorage.getItem("pathblock_auth_token")
+    }
+  }).done(function(v){
+    if(cb) { cb(v) }
   });
+  if(cb) return;
   if(result.status == 200) {
     return result.responseText;
   } else {
@@ -17,15 +34,12 @@ function getData(n) {
 function putData(n,v) {
   var result = $.ajax({
     url: "/api/v1/datum/" + encodeURIComponent(n),
-    async: false,
     method: "PUT",
-    data: v
+    data: v,
+    headers: {
+      Authorization: localStorage.getItem("pathblock_auth_token")
+    }
   });
-  if(result.status == 200) {
-    return true;
-  } else {
-    if(console && console.error) console.error( "setting data failed: " + result.status + " " + result.statusText + ": " + result.responseText );
-  }
 }
 
 function generateString(v) {
@@ -51,7 +65,21 @@ function generateMultiPrompt(v) {
   var addButton = $("<button class='btn btn-default btn-primary' type='button'>Add New</button>")
     .data("field", JSON.stringify(v))
     .click(multiPromptButton);
-  return addButton;
+  var outer = $("<div>")
+    .append(addButton)
+    .append($("<div>").attr("id", "multi" + v.name))
+    .append($("<input type='hidden'>").attr( "id", "sb" + v.name));
+  return outer;
+}
+
+function generateMultiOpts(select,optArray) {
+  $.each(optArray,function(i,opt){
+    if(opt.name) {
+      select.append( $("<option>").text(opt.name).val(opt.name) );
+    } else {
+      select.append( $("<option>").text(opt).val(opt) );
+    }
+  });
 }
 
 function generateMulti(v) {
@@ -74,24 +102,16 @@ function generateMulti(v) {
   var opts;
 
   if(Array.isArray(v.options)) {
-    opts = v.options;
+    generateMultiOpts(sel,v.options);
   } else {
-    opts = localStorage.getItem(v.options);
-    if(opts) {
-      opts = JSON.parse(opts);
-      opts = $.map(opts, function(c,i,a){return c.name;});
-    } else {
-      opts = [];
-    }
+    getData(v.options,function(value){
+      if(value!=="") {
+        opts = JSON.parse(value);
+        opts = $.map(opts, function(c,i,a){return c.name;});
+        generateMultiOpts(sel,opts);
+      }
+    });
   }
-
-  $.each(opts,function(i,opt){
-    if(opt.name) {
-      sel.append( $("<option>").text(opt.name).val(opt.name) );
-    } else {
-      sel.append( $("<option>").text(opt).val(opt) );
-    }
-  });
 
   var outer = $("<div>").append(div);
   outer.append( $("<div>").attr("id", "multi" + v.name) );
@@ -172,30 +192,44 @@ function multiPromptButton(update) {
     update=true;
   }
   var field = JSON.parse($(this).data("field"));
-  var cache = localStorage.getItem("sb_cache_" + field.name);
+  var cache = getData("sb_cache_" + field.name);
   if(!cache) {
     cache = {};
   } else {
     cache = JSON.parse(cache);
   }
-//  feats[ name ] = {
-//    name: name,
-//    description: description
-//  }
 
-  var params = Array();
+  var needSave = 0;
+  var params = {};
   $.each( field.parameters, function(i,p) {
     var cached = "";
     if(p.key && params[p.key] && cache[params[p.key]] && cache[params[p.key]][p.name]) {
       cached = cache[params[p.key]][p.name];
     }
     params[p.name] = prompt( "Please provide: " + p.name + "\n" + p.prompt, cached );
-    if(p.key && params[p.key]) {
-      if(!cache[params[p.key]]) cache[params[p.key]] = Array();
-      cache[params[p.key]][p.name] = params[p.name];
+    if(p.key && params[p.key] && params[p.name] != cached) {
+      var kv = params[p.key];
+      if(!cache.hasOwnProperty(kv) || typeof cache[kv] != "object" || Array.isArray(cache[kv])) {
+        cache[kv] = {};
+      }
+      cache[kv][p.name] = params[p.name];
     }
   });
-  localStorage.setItem("sb_cache_"+field.name, JSON.stringify(cache));
+  putData("sb_cache_"+field.name, JSON.stringify(cache));
+  addMultiPromptButton(field,params);
+  if(update) { updateStatblock(); saveState(); }
+}
+
+function addMultiPromptButton(field,params) {
+  $("#multi" + field.name).append(
+    $("<button class='btn btn-default btn-sm'></button>")
+      .text( params["name"] )
+      .prop( "id", "multiprompt_" + field.name + "_" + params["name"] )
+      .data( "val", JSON.stringify(params) )
+      .data( "field", $(this).data("field") )
+      .append( "<span class='glyphicon glyphicon-remove'>" )
+      .click(multiRemoveButton)
+  );
 }
 
 function multiButton(update) {
@@ -225,7 +259,7 @@ function multiButton(update) {
 
 function saveStateValue(field) {
   var val = "";
-  if(field.type == "multi") {
+  if(field.type == "multi" || field.type == "multiPrompt") {
     val = $.map($("#multi" + field.name + " button").get(), function(but){
       return $(but).data("val");
     });
@@ -248,16 +282,21 @@ function saveState(name) {
       state[v.name] = saveStateValue(v);
     }
   });
-  localStorage.setItem("sb_save_" + name, JSON.stringify(state));
-  var index = JSON.parse(localStorage.getItem("sb_index"));
-  if(!Array.isArray(index)) {
-    index = Array();
-  }
-  if(index.indexOf(name) == -1) {
-    index.push(name);
-    localStorage.setItem("sb_index", JSON.stringify(index));
-    updateMenu();
-  }
+  putData("sb_save_" + name, JSON.stringify(state));
+  getData("sb_index",function(v){
+    var index;
+    if(v!=="") {
+      index = JSON.parse(v);
+    }
+    if(!Array.isArray(index)) {
+      index = Array();
+    }
+    if(index.indexOf(name) == -1) {
+      index.push(name);
+      putData("sb_index", JSON.stringify(index));
+      updateMenu();
+    }
+  });
 }
 
 function loadStateValue(state,field) {
@@ -270,7 +309,17 @@ function loadStateValue(state,field) {
       });
       $("#sel" + field.name).val( $("#sel" + field.name + " option").first().val() );
     } catch(SyntaxError) {
+        if(console && console.error) console.error( "error doing something with " + v );
     }
+  } else if(field.type == "multiPrompt") {
+    var entries = JSON.parse(state[field.name]);
+    $.each(entries,function(i,v){
+      try {
+        addMultiPromptButton(field,JSON.parse(v));
+      } catch(SyntaxError) {
+        if(console && console.error) console.error( "error parsing JSON: " + v );
+      }
+    });
   } else if(state[field.name]) {
     $("#sb" + field.name).val(JSON.parse(state[field.name]));
   }
@@ -279,17 +328,19 @@ function loadStateValue(state,field) {
 function loadState(name) {
   if(!name) { name="working"; }
   loadedFile = name;
-  var state = JSON.parse(localStorage.getItem("sb_save_" + name));
-  clearState();
-  $.each(fields,function(i,v){
-    if(v.skip) { return; }
-    if(v.type == "row") {
-      $.each(v.fields,function(i,v){
+  getData("sb_save_" + name, function(value) {
+    var state = JSON.parse(value);
+    clearState();
+    $.each(fields,function(i,v){
+      if(v.skip) { return; }
+      if(v.type == "row") {
+        $.each(v.fields,function(i,v){
+          loadStateValue(state, v);
+        });
+      } else {
         loadStateValue(state, v);
-      });
-    } else {
-      loadStateValue(state, v);
-    }
+      }
+    });
   });
 }
 
@@ -321,21 +372,22 @@ function newSQ() {
   var type = prompt("SQ type? (Ex or Su)");
   var description = prompt( "SQ description?" );
   if(name && type && description) {
-    var superquals = localStorage.getItem("sb_superquals");
-    if(!superquals) {
-      superquals = {};
-    } else {
-      superquals = JSON.parse(superquals);
-    }
-    superquals[ name ] = {
-      name: name,
-      type: type,
-      description: description
-    }
-    localStorage.setItem("sb_superquals", JSON.stringify(superquals));
-    generateForm();
-    loadState();
-    updateStatblock();
+    getData("sb_superquals", function(superquals) {
+      if(!superquals) {
+        superquals = {};
+      } else {
+        superquals = JSON.parse(superquals);
+      }
+      superquals[ name ] = {
+        name: name,
+        type: type,
+        description: description
+      }
+      putData("sb_superquals", JSON.stringify(superquals));
+      generateForm();
+      loadState();
+      updateStatblock();
+    });
   }
 }
 
@@ -343,42 +395,49 @@ function newFeat() {
   var name = prompt("New feat name?" );
   var description = prompt( "Feat description?" );
   if(name && description) {
-    var feats = localStorage.getItem("sb_feats");
-    if(!feats) {
-      feats = {};
-    } else {
-      feats = JSON.parse(feats);
-    }
-    feats[ name ] = {
-      name: name,
-      description: description
-    }
-    localStorage.setItem("sb_feats", JSON.stringify(feats));
-    generateForm();
-    loadState();
-    updateStatblock();
-  }
-}
-
-function updateMenu() {
-  var index = JSON.parse(localStorage.getItem("sb_index"));
-  if(Array.isArray(index)) {
-    var menu = $('#menuLoad').empty();
-    index.map(function(c,i,a){
-      menu.append(
-        $('<li>')
-          .append(
-            $('<a>')
-              .text(c)
-              .prop('href', '#')
-              .click(function(){loadState(c);updateStatblock();})
-          )
-      );
+    getData("sb_feats", function(feats){
+      if(!feats) {
+        feats = {};
+      } else {
+        feats = JSON.parse(feats);
+      }
+      feats[ name ] = {
+        name: name,
+        description: description
+      }
+      putData("sb_feats", JSON.stringify(feats));
+      generateForm();
+      loadState();
+      updateStatblock();
     });
   }
 }
 
+function updateMenu() {
+  getData("sb_index", function(indexdata) {
+    var index;
+    if(indexdata !== "") {
+      index = JSON.parse(indexdata);
+    }
+    if(Array.isArray(index)) {
+      var menu = $('#menuLoad').empty();
+      index.map(function(c,i,a){
+        menu.append(
+          $('<li>')
+            .append(
+              $('<a>')
+                .text(c)
+                .prop('href', '#')
+                .click(function(){loadState(c);updateStatblock();})
+            )
+        );
+      });
+    }
+   });
+}
+
 $(function(){
+  checkToken();
   initializeMenu();
   try {
     generateForm();
