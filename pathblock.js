@@ -2,6 +2,32 @@
 
 var loadedFile='working';
 
+function getData(n) {
+  var result = $.ajax({
+    url: "/api/v1/datum/" + encodeURIComponent(n),
+    async: false
+  });
+  if(result.status == 200) {
+    return result.responseText;
+  } else {
+    if(console && console.error) console.error( "retrieving data failed: " + result.status + " " + result.statusText + ": " + result.responseText );
+  }
+}
+
+function putData(n,v) {
+  var result = $.ajax({
+    url: "/api/v1/datum/" + encodeURIComponent(n),
+    async: false,
+    method: "PUT",
+    data: v
+  });
+  if(result.status == 200) {
+    return true;
+  } else {
+    if(console && console.error) console.error( "setting data failed: " + result.status + " " + result.statusText + ": " + result.responseText );
+  }
+}
+
 function generateString(v) {
   return $("<input type='text' class='form-control'>")
     .attr( "placeholder", v.placeholder )
