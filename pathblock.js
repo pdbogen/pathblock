@@ -21,6 +21,13 @@ function generateSelect(v) {
   return sel;
 }
 
+function generateMultiPrompt(v) {
+  var addButton = $("<button class='btn btn-default btn-primary' type='button'>Add New</button>")
+    .data("field", JSON.stringify(v))
+    .click(multiPromptButton);
+  return addButton;
+}
+
 function generateMulti(v) {
 // select
 // add button
@@ -75,6 +82,8 @@ function generateField(v) {
     elem.append(generateSelect(v));
   } else if( v.type == "multi" ) {
     elem.append(generateMulti(v));
+  } else if(v.type == "multiPrompt") {
+    elem.append(generateMultiPrompt(v));
   } else {
     elem = undefined;
   }
@@ -115,7 +124,7 @@ function generateForm() {
   $("#statblockForm").empty();
   $.each(fields,function(i,v){
     try {
-      if(v.type == "row") {
+      if(v.type == "row" || v.type == "listRow") {
         $("#statblockForm").append(generateRow(v.fields,v));
       } else {
         $("#statblockForm").append(generateRow(Array(v),{}));
@@ -130,6 +139,37 @@ function multiRemoveButton() {
   $(this).remove();
   updateStatblock();
   saveState();
+}
+
+function multiPromptButton(update) {
+  if(update===undefined) {
+    update=true;
+  }
+  var field = JSON.parse($(this).data("field"));
+  var cache = localStorage.getItem("sb_cache_" + field.name);
+  if(!cache) {
+    cache = {};
+  } else {
+    cache = JSON.parse(cache);
+  }
+//  feats[ name ] = {
+//    name: name,
+//    description: description
+//  }
+
+  var params = Array();
+  $.each( field.parameters, function(i,p) {
+    var cached = "";
+    if(p.key && params[p.key] && cache[params[p.key]] && cache[params[p.key]][p.name]) {
+      cached = cache[params[p.key]][p.name];
+    }
+    params[p.name] = prompt( "Please provide: " + p.name + "\n" + p.prompt, cached );
+    if(p.key && params[p.key]) {
+      if(!cache[params[p.key]]) cache[params[p.key]] = Array();
+      cache[params[p.key]][p.name] = params[p.name];
+    }
+  });
+  localStorage.setItem("sb_cache_"+field.name, JSON.stringify(cache));
 }
 
 function multiButton(update) {

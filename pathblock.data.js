@@ -3,7 +3,8 @@ var fields = [
     style: "major",
     fields: [
       { name: "Name",      type: "string", placeholder: "Goblin", style: "floatLeft" },
-      { name: "CR",        type: "string", placeholder: "1", style: "right", formatter: function(v){ return "CR " + v; } }
+      { name: "CR",        type: "string", placeholder: "1", style: "right", formatter: function(v){ s="CR " + v; var mr = $("#sbMR").val(); if(mr) s += "/MR " + mr; return s } },
+      { name: "MR", type: "string", display: "Mythic Rank", style: "none" }
     ]
   },
   { name: "XP", label: "XP", type: "string", placeholder: "100" },
@@ -119,6 +120,8 @@ var fields = [
       { name: "immune", label: "Immune", display: "Immunities", type: "multi", options: [ 
           { name: "construct traits", label: "Construct Traits", type: "Ex", description: "Constructs are immune to death effects, disease, mind-affecting effects (charms, compulsions, phantasms, patterns, and morale effects), necromancy effects, paralysis, poison, sleep, stun, and any effect that requires a Fortitude save (unless the effect also works on objects, or is harmless). Constructs are not subject to nonlethal damage, ability damage, ability drain, fatigue, exhaustion, or energy drain. Constructs are not at risk of death from massive damage. Immediately destroyed when reduced to 0 hit points or less. Immunity to bleed, disease, death effects, necromancy effects, paralysis, poison, sleep effects, and stunning." },
           { name: "fire", label: "Fire", type: "Ex or Su", description: "A creature with immunities takes no damage from listed sources. Immunities can also apply to afflictions, conditions, spells (based on school, level, or save type), and other effects. A creature that is immune does not suffer from these effects, or any secondary effects that are triggered due to an immune effect." },
+          { name: "mind-affecting", label: "Mind-Affecting", type: "Ex or Su", description: "A creature with immunities takes no damage from listed sources. Immunities can also apply to afflictions, conditions, spells (based on school, level, or save type), and other effects. A creature that is immune does not suffer from these effects, or any secondary effects that are triggered due to an immune effect." },
+          { name: "paralysis", label: "Paralysis", type: "Ex or Su", description: "A creature with immunities takes no damage from listed sources. Immunities can also apply to afflictions, conditions, spells (based on school, level, or save type), and other effects. A creature that is immune does not suffer from these effects, or any secondary effects that are triggered due to an immune effect." },
           { name: "poison", label: "Poison", type: "Ex or Su", description: "A creature with immunities takes no damage from listed sources. Immunities can also apply to afflictions, conditions, spells (based on school, level, or save type), and other effects. A creature that is immune does not suffer from these effects, or any secondary effects that are triggered due to an immune effect." }
         ]
       },
@@ -139,6 +142,13 @@ var fields = [
     }
   },
   { name: "melee", display: "Melee", type: "string", label: "Melee" },
+  { name: "SLA", display: "Spell-like Abilities", type: "multiPrompt", parameters: [
+    { name: "frequency", prompt: "FREQUENCY-- name (comment, DC dc)" },
+    { name: "name",      prompt: "frequency-- NAME (comment, DC dc)" },
+    { name: "comment",   prompt: "frequency-- name (COMMENT, DC dc)" },
+    { name: "dc",        prompt: "frequency-- name (comment, DC DC)" },
+    { name: "description", prompt: "Stat description (included at end of statblock)", key: "name" },
+  ], group: "frequency" },
   { type: "row", delimiter: ";", fields: [
       { name: "space", display: "Space", label: "Space", type: "string", placeholder: "5 ft." },
       { name: "reach", display: "Reach", label: "Reach", type: "string", placeholder: "5 ft." }

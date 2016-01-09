@@ -20,7 +20,7 @@ function updateStatblockValue(v) {
 
 function findSource(fields,name) {
   if(fields[0]) {
-    if(fields[0].type == "row") {
+    if(fields[0].type == "row" || fields[0].type == "listRow") {
       var rowResult = findSource(fields[0].fields, name);
       if(rowResult) {
         return rowResult;
@@ -40,7 +40,9 @@ function findSource(fields,name) {
 function updateStatblockField(v) {
   var value = updateStatblockValue(v);
   var result;
-  if(v.style == "floatLeft") {
+  if(v.style == "none") {
+    return "";
+  } else if(v.style == "floatLeft") {
     result = $("<div style='float: left'>").text(value);
   } else if(v.style == "right") {
     result = $("<div style='text-align: right;'>").text(value);
@@ -162,6 +164,8 @@ function updateStatblock() {
   $.each(fields,function(i,v){
     if(v.type == "row") {
       block.append(updateStatblockRow(v.fields, v));
+    } else if(v.type == "listRow") {
+      $.each(v.fields, function(f){updateStatblockRow(Array(f),{})});
     } else {
       block.append(updateStatblockRow(Array(v),{}));
     }
